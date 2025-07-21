@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Tebsite Builder</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="main">
+    <!-- Sidebar Tools -->
+    <div class="toolbar">
+      <h2>🛠️ Tools</h2>
+
+      <button id="addTextBtn">T</button>
+      <button id="addMusicBtn">🎵</button>
+      <button id="addImageBtn">🖼️</button>
+      <button id="trashBtn" class="trash">🗑️</button>
+      <button id="publishBtn">🌐 Publish</button>
+
+      <h3>🎨 Page Color</h3>
+      <div class="colors">
+        <button class="color-btn" style="background-color: white;" data-color="white"></button>
+        <button class="color-btn" style="background-color: lightblue;" data-color="lightblue"></button>
+        <button class="color-btn" style="background-color: lightgreen;" data-color="lightgreen"></button>
+        <button class="color-btn" style="background-color: lightcoral;" data-color="lightcoral"></button>
+        <button class="color-btn" style="background-color: lightgoldenrodyellow;" data-color="lightgoldenrodyellow"></button>
+      </div>
+    </div>
+
+    <!-- Page Canvas -->
+    <div id="canvas" class="canvas">
+      <p class="editor-tip"><em>Click "T" to add editable text, 🎵 for music, 🖼️ for image.</em></p>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById("canvas");
+
+    // Add text
+    document.getElementById("addTextBtn").addEventListener("click", () => {
+      const p = document.createElement("p");
+      p.innerHTML = "<br>";
+      p.contentEditable = "true";
+      p.classList.add("text-block");
+      canvas.appendChild(p);
+      p.focus();
+    });
+
+    // Trash last item
+    document.getElementById("trashBtn").addEventListener("click", () => {
+      const last = canvas.lastElementChild;
+      if (last && last !== canvas.firstElementChild) last.remove();
+    });
+
+    // Change background
+    document.querySelectorAll(".color-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const color = btn.getAttribute("data-color");
+        canvas.style.backgroundColor = color;
+      });
+    });
+
+    // Add music
+    document.getElementById("addMusicBtn").addEventListener("click", () => {
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = ".mp3, .wav";
+      input.style.display = "none";
+
+      input.addEventListener("change", (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+        const url = URL.createObjectURL(file);
+
+        const player = document.createElement("div");
+        player.classList.add("music-player");
+
+        const audio = document.createElement("audio");
+        audio.src = url;
+
+        const playBtn = document.createElement("div");
+        playBtn.classList.add("play-btn");
+
+        playBtn.addEventListener("click", () => {
+          if (audio.paused) {
+            audio.play();
+            playBtn.classList.add("playing");
+          } else {
+            audio.pause();
+            playBtn.classList.remove("playing");
+          }
+        });
+
+        player.appendChild(playBtn);
+        player.appendChild(audio);
+        canvas.appendChild(player);
+      });
+
+      document.body.appendChild(input);
+      input.click();
+      input.remove();
+    });
+
+    // Add image (fixed with base64)
+    document.getElementById("addImageBtn").addEventListener("click", () => {
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = ".png, .jpg, .jpeg";
+      input.style.display = "none";
+
+      input.addEventListener("change", (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = () => {
+          const img = document.createElement("img");
+          img.src = reader.result; // Base64 data
+          img.classList.add("user-image");
+          canvas.appendChild(img);
+        };
+        reader.readAsDataURL(file); // Convert to base64
+      });
+
+      document.body.appendChild(input);
+      input.click();
+      input.remove();
+    });
+
+    // Publish: Save to .html file (removes tip)
+    document.getElementById("publishBtn").addEventListener("click", () => {
+      const clone = canvas.cloneNode(true);
+      const tip = clone.querySelector(".editor-tip");
+      if (tip) tip.remove();
+      const content = clone.innerHTML;
+
+      const html = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>My Published Tebsite</title>
+  <style>
+    body { font-family: Arial; padding: 20px; background: white; }
+    .text-block { font-size: 20px; margin-bottom: 15px; }
+    img { max-width: 100%; border: 1px solid #ccc; border-radius: 6px; margin-bottom: 15px; }
+    audio { display: block; margin-top: 10px; }
+  </style>
+</head>
+<body>
+${content}
+</body>
+</html>
+`;
+
+      const blob = new Blob([html], { type: "text/html" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "my-tebsite.html";
+      a.click();
+    });
+  </script>
+</body>
+</html>
